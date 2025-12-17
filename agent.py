@@ -41,5 +41,4 @@ db_path = "data/checkpoints.sqlite"
 conn = sqlite3.connect(db_path, check_same_thread=False)
 memory = SqliteSaver(conn)
 
-# Компиляция графа
 graph_app = builder.compile(checkpointer=memory)
