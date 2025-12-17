@@ -1,5 +1,7 @@
 import os
 import sqlite3
+from dotenv import load_dotenv  # <--- Добавили
+
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, START
 from langgraph.prebuilt import ToolNode, tools_condition
@@ -7,16 +9,20 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from tools import tools_list
 from logger import logger
 
+load_dotenv()
+
+if not os.getenv("OPENAI_API_KEY"):
+    logger.error("❌ OШИБКА: Не найден OPENAI_API_KEY")
+
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.5)
 llm_with_tools = llm.bind_tools(tools_list)
-
 
 
 def reasoner_node(state: MessagesState):
     messages = state["messages"]
     last_msg = messages[-1].content
 
-    logger.info(f"🧠 LLM INPUT: Входящее сообщение: '{last_msg}'")
+    logger.info(f"🧠 LLM INPUT: '{last_msg}'")
 
     response = llm_with_tools.invoke(messages)
 
@@ -24,7 +30,7 @@ def reasoner_node(state: MessagesState):
         tool_names = ", ".join([t['name'] for t in response.tool_calls])
         logger.info(f"👉 LLM DECISION: Выбраны инструменты -> [{tool_names}]")
     else:
-        logger.info(f"🗣 LLM ANSWER: Отвечает текстом (без инструментов)")
+        logger.info(f"🗣 LLM ANSWER: Текст")
 
     return {"messages": [response]}
 
