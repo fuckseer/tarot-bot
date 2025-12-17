@@ -1,6 +1,6 @@
 import os
 import sqlite3
-from dotenv import load_dotenv  # <--- Добавили
+from dotenv import load_dotenv
 
 from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, MessagesState, START
@@ -44,6 +44,9 @@ builder.add_conditional_edges("reasoner", tools_condition)
 builder.add_edge("tools", "reasoner")
 
 db_path = "data/checkpoints.sqlite"
+db_dir = os.path.dirname(db_path)
+if db_dir:
+    os.makedirs(db_dir, exist_ok=True)
 conn = sqlite3.connect(db_path, check_same_thread=False)
 memory = SqliteSaver(conn)
 
