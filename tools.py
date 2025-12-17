@@ -1,4 +1,5 @@
 import random
+import requests
 from langchain_core.tools import tool
 from logger import logger
 
@@ -6,23 +7,46 @@ from logger import logger
 @tool
 def get_crypto_price(coin: str) -> str:
     """
-    Узнать текущую цену криптовалюты (bitcoin, eth, ton и т.д.) в USD.
-    Принимает название монеты.
+    ПОЛУЧИТЬ КУРС В РЕАЛЬНОМ ВРЕМЕНИ.
+    Вызывать ВСЕГДА, когда упоминается криптовалюта (bitcoin, btc, ton, eth...),
+    даже если цена уже упоминалась в чате ранее.
+    Цены меняются мгновенно, старые данные использовать нельзя.
     """
-    logger.info(f"🔧 TOOL CALL: [get_crypto_price] для монеты '{coin}'")
+    coin_clean = coin.lower().strip()
+    logger.info(f"🔧 TOOL CALL: [get_crypto_price] запрос к API для '{coin_clean}'")
 
-    prices = {
-        "bitcoin": "64,300",
-        "ethereum": "3,450",
-        "ton": "7.2",
-        "notcoin": "0.02"
-    }
-    price = prices.get(coin.lower())
+    try:
+        url = "https://api.coinlore.net/api/tickers/?start=0&limit=100"
+        response = requests.get(url, timeout=10)
 
-    if price:
-        res = f"Карты показывают, что {coin} стоит ${price}"
-    else:
-        res = f"Туман скрывает цену {coin} (нет данных)."
+        if response.status_code != 200:
+            return "Духи интернета блокируют связь (Ошибка API CoinLore)."
+
+        data = response.json()
+        coins_list = data.get("data", [])
+
+        found_item = None
+
+        for item in coins_list:
+            if (item['symbol'].lower() == coin_clean or
+                    item['name'].lower() == coin_clean or
+                    item['nameid'] == coin_clean):
+                found_item = item
+                break
+
+        if found_item:
+            name = found_item['name']
+            symbol = found_item['symbol']
+            price = found_item['price_usd']
+            change_24h = found_item['percent_change_24h']
+
+            res = (f"💰 {name} ({symbol}): ${price}\n"
+                   f"📊 Изменение за 24ч: {change_24h}%")
+        else:
+            res = f"Карты не видят монету '{coin}' в топ-100 рынка."
+
+    except Exception as e:
+        res = f"Произошла мистическая ошибка сети: {e}"
 
     logger.info(f"✅ TOOL RESULT: {res}")
     return res
@@ -33,7 +57,7 @@ def currency_calculator(amount: float, rate: float) -> str:
     """
     Перевести одну валюту в другую.
     Принимает сумму (amount) и курс (rate).
-    Используй это, чтобы посчитать итоговую стоимость.
+    Используй это, чтобы посчитать итоговую стоимость, когда знаешь курс.
     """
     logger.info(f"🔧 TOOL CALL: [currency_calculator] {amount} * {rate}")
 

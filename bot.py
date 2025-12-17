@@ -1,6 +1,5 @@
 import asyncio
 import os
-import logging
 from dotenv import load_dotenv  # <--- Импорт
 
 from aiogram import Bot, Dispatcher, types
@@ -24,7 +23,7 @@ bot = Bot(token=TOKEN)
 async def cmd_start(message: types.Message):
     await message.answer(
         "🔮 Я Финансовый Таролог.\n"
-        "Спроси меня про крипту, курс валют или попроси знак судьбы."
+        "Спроси меня про курс крипты, попроси конвертировать монеты или просто попроси знак судьбы"
     )
 
 

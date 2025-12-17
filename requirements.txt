@@ -4,3 +4,4 @@ langchain-openai
 langgraph
 langgraph-checkpoint-sqlite
 python-dotenv
+requests
